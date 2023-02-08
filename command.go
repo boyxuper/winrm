@@ -195,10 +195,30 @@ func (c *Command) ExitCode() int {
 	return c.exitCode
 }
 
+// Error returns command error.
+func (c *Command) Error() error {
+	return c.err
+}
+
+func (c *Command) Result() (stdout []byte, stderr []byte, exitCode int, err error) {
+	err = c.Wait()
+	if err != nil {
+		return
+	}
+
+	var outWriter, errWriter bytes.Buffer
+	_, _ = io.Copy(&outWriter, c.Stdout)
+	_, _ = io.Copy(&errWriter, c.Stderr)
+
+	return outWriter.Bytes(), errWriter.Bytes(), c.exitCode, c.err
+}
+
 // Wait function will block the current goroutine until the remote command terminates.
-func (c *Command) Wait() {
+func (c *Command) Wait() error {
 	// block until finished
 	<-c.done
+
+	return c.err
 }
 
 // Write data to this Pipe

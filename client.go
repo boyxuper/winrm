@@ -181,7 +181,9 @@ func (c *Client) RunWithContextWithInput(ctx context.Context, command string, st
 	if err != nil {
 		return 1, err
 	}
-	defer shell.Close()
+	defer func() {
+		_ = shell.Close()
+	}()
 	cmd, err := shell.ExecuteWithContext(ctx, command)
 	if err != nil {
 		return 1, err
@@ -198,7 +200,7 @@ func (c *Client) RunWithContextWithInput(ctx context.Context, command string, st
 			return
 		}
 		defer func() {
-			cmd.Stdin.Close()
+			_ = cmd.Stdin.Close()
 		}()
 		_, _ = io.Copy(cmd.Stdin, stdin)
 	}()
@@ -213,7 +215,23 @@ func (c *Client) RunWithContextWithInput(ctx context.Context, command string, st
 
 	cmd.Wait()
 	wg.Wait()
-	cmd.Close()
+	_ = cmd.Close()
 
 	return cmd.ExitCode(), cmd.err
+}
+
+func (c *Client) RunPSCommand(shell *Shell, command string) ([]byte, []byte, int, error) {
+	ctx := context.TODO()
+
+	command = Powershell(command)
+
+	cmd, err := shell.ExecuteWithContext(ctx, command)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+
+	cmd.Wait()
+	_ = cmd.Close()
+
+	return cmd.Result()
 }
