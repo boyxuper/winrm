@@ -9,16 +9,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/masterzen/winrm/soap"
+	"github.com/boyxuper/winrm/soap"
 )
 
-//ClientAuthRequest ClientAuthRequest
+// ClientAuthRequest ClientAuthRequest
 type ClientAuthRequest struct {
 	transport http.RoundTripper
 	dial      func(network, addr string) (net.Conn, error)
 }
 
-//Transport Transport
+// Transport Transport
 func (c *ClientAuthRequest) Transport(endpoint *Endpoint) error {
 	cert, err := tls.X509KeyPair(endpoint.Cert, endpoint.Key)
 	if err != nil {
@@ -82,7 +82,7 @@ func parse(response *http.Response) (string, error) {
 	return "", fmt.Errorf("invalid content type")
 }
 
-//Post Post
+// Post Post
 func (c ClientAuthRequest) Post(client *Client, request *soap.SoapMessage) (string, error) {
 	httpClient := &http.Client{Transport: c.transport}
 
@@ -115,7 +115,7 @@ func (c ClientAuthRequest) Post(client *Client, request *soap.SoapMessage) (stri
 	return body, err
 }
 
-//NewClientAuthRequestWithDial NewClientAuthRequestWithDial
+// NewClientAuthRequestWithDial NewClientAuthRequestWithDial
 func NewClientAuthRequestWithDial(dial func(network, addr string) (net.Conn, error)) *ClientAuthRequest {
 	return &ClientAuthRequest{
 		dial: dial,

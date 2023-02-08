@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/masterzen/winrm/soap"
+	"github.com/boyxuper/winrm/soap"
 )
 
 var soapXML = "application/soap+xml"
@@ -115,14 +115,14 @@ func (c clientRequest) Post(client *Client, request *soap.SoapMessage) (string, 
 	return body, err
 }
 
-//NewClientWithDial NewClientWithDial
+// NewClientWithDial NewClientWithDial
 func NewClientWithDial(dial func(network, addr string) (net.Conn, error)) *clientRequest {
 	return &clientRequest{
 		dial: dial,
 	}
 }
 
-//NewClientWithProxyFunc NewClientWithProxyFunc
+// NewClientWithProxyFunc NewClientWithProxyFunc
 func NewClientWithProxyFunc(proxyfunc func(req *http.Request) (*url.URL, error)) *clientRequest {
 	return &clientRequest{
 		proxyfunc: proxyfunc,
