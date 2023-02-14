@@ -14,6 +14,9 @@ type Shell struct {
 func (s *Shell) Execute(command string, arguments ...string) (*Command, error) {
 	return s.ExecuteWithContext(context.Background(), command, arguments...)
 }
+func (s *Shell) Client() *Client {
+	return s.client
+}
 
 // ExecuteWithContext command on the given Shell, returning either an error or a Command
 func (s *Shell) ExecuteWithContext(ctx context.Context, command string, arguments ...string) (*Command, error) {

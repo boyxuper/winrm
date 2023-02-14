@@ -37,6 +37,7 @@ type Command struct {
 
 	done   chan struct{}
 	cancel chan struct{}
+	ctx    context.Context
 }
 
 func newCommand(ctx context.Context, shell *Shell, ids string) *Command {
@@ -48,6 +49,8 @@ func newCommand(ctx context.Context, shell *Shell, ids string) *Command {
 		err:      nil,
 		done:     make(chan struct{}),
 		cancel:   make(chan struct{}),
+
+		ctx: ctx,
 	}
 
 	command.Stdout = newCommandReader("stdout", command)
@@ -56,8 +59,6 @@ func newCommand(ctx context.Context, shell *Shell, ids string) *Command {
 		eof:     false,
 	}
 	command.Stderr = newCommandReader("stderr", command)
-
-	go fetchOutput(ctx, command)
 
 	return command
 }
@@ -142,7 +143,8 @@ func (c *Command) slurpAllOutput() (bool, error) {
 
 	response, err := c.client.sendRequest(request)
 	if err != nil {
-		if strings.Contains(err.Error(), "OperationTimeout") {
+		if strings.Contains(err.Error(), "OperationTimeout") ||
+			strings.Contains(err.Error(), "timeout awaiting response headers") {
 			// Operation timeout because there was no command output
 			return false, err
 		}
@@ -201,14 +203,28 @@ func (c *Command) Error() error {
 }
 
 func (c *Command) Result() (stdout []byte, stderr []byte, exitCode int, err error) {
+	go fetchOutput(c.ctx, c)
+
+	var outWriter, errWriter bytes.Buffer
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
+	_ = c.Stdin.Close()
+	go func() {
+		defer wg.Done()
+		_, _ = io.Copy(&outWriter, c.Stdout)
+	}()
+	go func() {
+		defer wg.Done()
+		_, _ = io.Copy(&errWriter, c.Stderr)
+	}()
+
+	wg.Wait()
+
 	err = c.Wait()
 	if err != nil {
 		return
 	}
-
-	var outWriter, errWriter bytes.Buffer
-	_, _ = io.Copy(&outWriter, c.Stdout)
-	_, _ = io.Copy(&errWriter, c.Stderr)
 
 	return outWriter.Bytes(), errWriter.Bytes(), c.exitCode, c.err
 }
