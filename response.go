@@ -1,6 +1,7 @@
 package winrm
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -62,6 +63,32 @@ func ParseExecuteCommandResponse(response string) (string, error) {
 	return first(doc, "//rsp:CommandId")
 }
 
+var CliXMLHeader = []byte("#< CLIXML\r\n")
+
+func CleanupStderr(bs []byte) []byte {
+	if len(bs) < len(CliXMLHeader) || !bytes.Equal(bs[:len(CliXMLHeader)], CliXMLHeader) {
+		return bs
+	}
+
+	doc, err := xmltree.ParseXML(bytes.NewReader(bs[len(CliXMLHeader):]))
+	if err != nil {
+		return bs
+	}
+
+	buffer := bytes.NewBuffer(nil)
+	nodes, err := xPath(doc, ".//ps:S")
+	if err != nil {
+		return bs
+	}
+
+	for _, node := range nodes {
+		output := strings.ReplaceAll(node.ResValue(), "_x000D__x000A_", "\n")
+		buffer.Write([]byte(output))
+	}
+
+	return buffer.Bytes()
+}
+
 // ParseSlurpOutputErrResponse ParseSlurpOutputErrResponse
 func ParseSlurpOutputErrResponse(response string, stdout, stderr io.Writer) (bool, int, error) {
 	var (
@@ -74,8 +101,9 @@ func ParseSlurpOutputErrResponse(response string, stdout, stderr io.Writer) (boo
 	stdouts, _ := xPath(doc, "//rsp:Stream[@Name='stdout']")
 	for _, node := range stdouts {
 		content, _ := base64.StdEncoding.DecodeString(node.ResValue())
-		stdout.Write(content)
+		_, _ = stdout.Write(content)
 	}
+
 	stderrs, _ := xPath(doc, "//rsp:Stream[@Name='stderr']")
 	for _, node := range stderrs {
 		content, _ := base64.StdEncoding.DecodeString(node.ResValue())

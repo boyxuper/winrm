@@ -226,7 +226,7 @@ func (c *Command) Result() (stdout []byte, stderr []byte, exitCode int, err erro
 		return
 	}
 
-	return outWriter.Bytes(), errWriter.Bytes(), c.exitCode, c.err
+	return outWriter.Bytes(), CleanupStderr(errWriter.Bytes()), c.exitCode, c.err
 }
 
 // Wait function will block the current goroutine until the remote command terminates.

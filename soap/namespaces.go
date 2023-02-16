@@ -18,6 +18,7 @@ const (
 	NS_SCHEMA_INST = "http://www.w3.org/2001/XMLSchema-instance"
 	NS_WIN_SHELL   = "http://schemas.microsoft.com/wbem/wsman/1/windows/shell"
 	NS_WSMAN_FAULT = "http://schemas.microsoft.com/wbem/wsman/1/wsmanfault"
+	NS_POWERSHELL  = "http://schemas.microsoft.com/powershell/2004/04"
 )
 
 // Namespace Prefixes
@@ -33,6 +34,7 @@ const (
 	NSP_SCHEMA_INST = "xsi"
 	NSP_WIN_SHELL   = "rsp"
 	NSP_WSMAN_FAULT = "f"
+	NSP_POWERSHELL  = "ps"
 )
 
 // DOM Namespaces
@@ -76,6 +78,7 @@ func GetAllXPathNamespaces() func(o *goxpath.Opts) {
 		NSP_SCHEMA_INST: NS_SCHEMA_INST,
 		NSP_WIN_SHELL:   NS_WIN_SHELL,
 		NSP_WSMAN_FAULT: NS_WSMAN_FAULT,
+		NSP_POWERSHELL:  NS_POWERSHELL,
 	}
 
 	return func(o *goxpath.Opts) {
